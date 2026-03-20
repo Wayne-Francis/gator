@@ -29,3 +29,18 @@ func handlerLogin(s *state, cmd command) error {
 	fmt.Printf("username %v has been set", cmd.args[0])
 	return nil
 }
+
+func (c *commands) run(s *state, cmd command) error {
+	if len(cmd.name) < 1 {
+        return fmt.Errorf("please enter a command to run")
+    	}
+	handler, ok := c.handlers[cmd.name] 
+	if !ok {
+	return fmt.Errorf("handler does not exist")
+    	}
+	return handler(s,cmd)
+	}
+
+func (c *commands) register(name string, f func(*state, command) error) {
+	c.handlers[name] =  f
+}
