@@ -1,4 +1,5 @@
 package main
+import _ "github.com/lib/pq"
 import (
 	"log"
 	 "github.com/Wayne_Francis/gator/internal/config"
