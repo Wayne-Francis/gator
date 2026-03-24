@@ -1,16 +1,22 @@
 package main
 import (
-	"github.com/Wayne_Francis/gator/internal/config"
-	"fmt"
+    "context"
+    "fmt"
+    "os"
+    "time"
+    "github.com/Wayne_Francis/gator/internal/config"
+    "github.com/Wayne_Francis/gator/internal/database"
+    "github.com/google/uuid"
 )
 
 type state struct { 
+ db  *database.Queries
  cfg *config.Config
 }
 
 type command struct {
 	name string
-	args [] string 
+	Args [] string 
 }
 
 type commands struct {
@@ -19,14 +25,19 @@ type commands struct {
 
 
 func handlerLogin(s *state, cmd command) error {
-	if len(cmd.args) < 1 {
+	if len(cmd.Args) < 1 {
         return fmt.Errorf("please enter a username")
     }
-    err := s.cfg.SetUser(cmd.args[0])
+	_, err := s.db.GetUser(context.Background(), cmd.Args[0])
+	if err != nil {
+		fmt.Println(err)
+    os.Exit(1)
+	}
+    err = s.cfg.SetUser(cmd.Args[0])
 	if err != nil {
 		return err
 	}
-	fmt.Printf("username %v has been set", cmd.args[0])
+	fmt.Printf("username %v has been set", cmd.Args[0])
 	return nil
 }
 
@@ -44,3 +55,27 @@ func (c *commands) run(s *state, cmd command) error {
 func (c *commands) register(name string, f func(*state, command) error) {
 	c.handlers[name] =  f
 }
+
+func handlerRegister(s *state, cmd command) error {
+    if len(cmd.Args) != 1 {
+        return fmt.Errorf("please enter a command to run")
+    	}
+	name := cmd.Args[0]
+
+	user, err := s.db.CreateUser(context.Background(), database.CreateUserParams{
+    Name: name,
+	ID: uuid.New(),
+	CreatedAt: time.Now(),
+	UpdatedAt: time.Now(),
+	})
+	if err != nil {
+    fmt.Println(err)
+    os.Exit(1)
+	}
+	err = s.cfg.SetUser(name)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("new user:name: %v,ID: %v,created: %v,updated: %v", user.Name,user.ID,user.CreatedAt,user.UpdatedAt )
+	return nil
+	}

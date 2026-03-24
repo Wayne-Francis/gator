@@ -1,8 +1,11 @@
 package main
-import _ "github.com/lib/pq"
+
 import (
+	_ "github.com/lib/pq"
 	"log"
 	 "github.com/Wayne_Francis/gator/internal/config"
+	 "github.com/Wayne_Francis/gator/internal/database"
+	 "database/sql"
 	"os"
 )
 
@@ -11,22 +14,28 @@ func main() {
 	if err != nil {
 		log.Fatalf("error: %v", err)
 	}
-	s := &state{cfg: &cfg}
+	db, err := sql.Open("postgres", cfg.Dburl)
+	if err != nil {
+    log.Fatalf("error connecting to db: %v", err)
+	}
+	defer db.Close()
+	dbQueries := database.New(db)
+	s := &state{cfg: &cfg, db: dbQueries}
 	cmds := commands{
     	handlers: map[string]func(*state, command) error{},
 	}
-    	cmds.register("login", handlerLogin)
+    cmds.register("login", handlerLogin)
+	cmds.register("register", handlerRegister)
 	args := os.Args
 	if len(args) < 2 {
 		log.Fatalf("please type commands")
-}
+	}
 	c := command{
 	name : args[1],
-	args : args[2:],
+	Args : args[2:],
 	}
 	err = cmds.run(s, c) 
 	if err != nil {
 		log.Fatalf("error: %v", err)
 	}
-
 }
