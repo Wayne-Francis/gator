@@ -79,3 +79,15 @@ func handlerRegister(s *state, cmd command) error {
 	fmt.Printf("new user:name: %v,ID: %v,created: %v,updated: %v", user.Name,user.ID,user.CreatedAt,user.UpdatedAt )
 	return nil
 	}
+
+	func handlerReset(s *state, cmd command) error {
+	if len(cmd.Args) != 0 {
+        return fmt.Errorf("reset takes no arguments")
+    	}
+	err := s.db.DeleteUsers(context.Background())
+	if err != nil {
+    	return err
+	}
+	fmt.Printf("Users have been deleted")
+	return nil
+}
