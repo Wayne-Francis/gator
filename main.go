@@ -27,6 +27,12 @@ func main() {
     cmds.register("login", handlerLogin)
 	cmds.register("register", handlerRegister)
 	cmds.register("reset", handlerReset)
+	cmds.register("users", handlerUsers)
+	cmds.register("agg", handlerAgg)
+	cmds.register("feeds", handlerFeeds)
+	cmds.register("addfeed", middlewareLoggedIn(handlerAddFeed))
+	cmds.register("follow", middlewareLoggedIn(handlerFollow))
+	cmds.register("following", middlewareLoggedIn(handlerFollowing))
 	args := os.Args
 	if len(args) < 2 {
 		log.Fatalf("please type commands")
