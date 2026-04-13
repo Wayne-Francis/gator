@@ -2,8 +2,13 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
+	"strings"
 	"time"
+
+	"github.com/Wayne_Francis/gator/internal/database"
+	"github.com/google/uuid"
 )
 
 func handlerAgg(s *state, cmd command) error {
@@ -40,7 +45,38 @@ func scrapeFeeds(s *state) {
 		return
 	}
 	for i := range feed.Channel.Item {
-		fmt.Printf("*%v\n", feed.Channel.Item[i].Title)
-	}
+		item := feed.Channel.Item[i]
 
+		parsedTime, err := time.Parse(time.RFC1123Z, item.PubDate)
+
+		var publishedAt sql.NullTime
+		if err == nil {
+			publishedAt = sql.NullTime{Time: parsedTime, Valid: true}
+		} else {
+			publishedAt = sql.NullTime{Valid: false}
+		}
+		_, err = s.db.CreatePost(context.Background(), database.CreatePostParams{
+			ID:        uuid.New(),
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+			Title: sql.NullString{
+				String: item.Title,
+				Valid:  item.Title != "",
+			},
+			Url: item.Link,
+			Description: sql.NullString{
+				String: item.Description,
+				Valid:  item.Description != "",
+			},
+			PublishedAt: publishedAt,
+			FeedID:      next_feed.ID,
+		})
+		if err != nil {
+			msg := err.Error()
+			if strings.Contains(msg, "posts_url_key") {
+			} else {
+				fmt.Println(err)
+			}
+		}
+	}
 }
